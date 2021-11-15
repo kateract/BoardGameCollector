@@ -1,0 +1,3 @@
+# Board Game Collector
+
+This is a hobby project that I am working on to facilitate cataloging of my board game collection.  The current plan is to wire together a Barcode Scanner, a UPC decoder, and Board Game Geek to make the list. The basic plan is to follow the schematic set forward by [techtrek.io](https://www.techtrek.io/inventorying-board-games-with-a-usb-scanner-part-1-overview/), just using C# for the backend and Angular for the front end. 
