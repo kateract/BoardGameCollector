@@ -1,52 +1,73 @@
-import { Component, OnInit, ViewChild, EventEmitter } from '@angular/core';
-import { ZXingScannerComponent } from '@zxing/ngx-scanner';
-import { BehaviorSubject } from 'rxjs';
-
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { BarcodeScannerLivestreamComponent } from 'ngx-barcode-scanner';
 
 @Component({
   selector: 'app-barcode-scanner',
   templateUrl: './barcode-scanner.component.html',
   styleUrls: ['./barcode-scanner.component.scss']
 })
-export class BarcodeScannerComponent implements OnInit {
-
-  constructor() { }
-  scannerEnabled: boolean = true;
-  torchEnabled: boolean = false;
-  torchAvailable$ = new BehaviorSubject<boolean>(false);
-  desiredDevice: MediaDeviceInfo | undefined;
-  deviceSelected: string = "";
-  availableDevices: MediaDeviceInfo[] = [];
-  resultString: string = "";
+export class BarcodeScannerComponent implements AfterViewInit {
+  @ViewChild(BarcodeScannerLivestreamComponent) barcodeScanner: BarcodeScannerLivestreamComponent | undefined
   
-  public get hasDevices() : boolean {
-    return this.availableDevices && this.availableDevices.length > 0;
-  }
+  barcodeTypes: string[] = [
+    'ean', 'upc'
+  ]
+  scanBuffer: Map<string, number> = new Map<string, number>();
+  scannedCodes: string[] = [];
+  devices: MediaDeviceInfo[] = [];
+
+  ngAfterViewInit(): void {
+    navigator.mediaDevices.enumerateDevices().then((mediaDevices: MediaDeviceInfo[]) => {
+      console.log(mediaDevices);
+      mediaDevices.map(device => {
+        if (device.kind === "videoinput") {
+          this.devices.push(device);
+          
+        }
+      })
+      if(this.devices.length <= 0) return;
+      let preferredDeviceId = localStorage.getItem("preferredDevice");
+      
+      if(!preferredDeviceId) {
+        preferredDeviceId = this.devices.find(d => d.label.includes('0') || d.label.includes("Logitech"))?.deviceId || null
+      }
+
+      if (!preferredDeviceId) {
+        preferredDeviceId = this.devices[0].deviceId
+      }
+      
   
-  
-  @ViewChild('scanner') scanner: ZXingScannerComponent | undefined;
-
-  ngOnInit(): void {
-    
+      if (this.barcodeScanner) {
+        this.barcodeScanner.deviceId = preferredDeviceId;
+        this.barcodeScanner
+      }
+      this.barcodeScanner?.start();
+    });
   }
 
-  onCamerasFound(devices: MediaDeviceInfo[]): void{
-    this.availableDevices = devices
+
+  onValueChanges(result: any) {
+    let barcodeValue = result.codeResult.code
+    this.scanBuffer.set(barcodeValue, (this.scanBuffer.get(barcodeValue) || 0) + 1)
+    this.scanBuffer.forEach((count, barcode) => {
+      if(count > 3) {
+        this.addCode(barcode);
+        this.scanBuffer.clear();
+      }
+    })
   }
 
-  onScanSuccess(resultString: string) {
-    this.resultString = resultString;
-    console.debug(this.resultString);
+  addCode(barcode: string) {
+    if(!this.scannedCodes.includes(barcode)) {
+      this.scannedCodes.push(barcode);
+      console.log(barcode);
+    }
   }
 
-  onDeviceChange(device: MediaDeviceInfo | undefined): void {
-    const selectedStr = device?.deviceId || '';
-    if(this.deviceSelected === selectedStr) { return;}
-    this.deviceSelected = selectedStr;
-    this.desiredDevice = device;
+  onStarted(): void {
+    console.log('started');
   }
 
-  onTorchCompatible(isCompatible: boolean | undefined): void {
-    this.torchAvailable$.next(isCompatible || false)
-  }
+
+
 }
