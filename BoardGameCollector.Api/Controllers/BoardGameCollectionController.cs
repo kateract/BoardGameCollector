@@ -1,4 +1,4 @@
-using BoardGameCollector.Models;
+using BoardGameCollector.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoardGameCollector.Api.Controllers;
@@ -9,14 +9,14 @@ public class BoardGameCollectionController : ControllerBase
 {
 
 
-    private readonly ILogger<BoardGameCollectionController> _logger;
+    private readonly ILogger<BoardGameCollectionController> logger;
 
     public BoardGameCollectionController(ILogger<BoardGameCollectionController> logger)
     {
-        _logger = logger;
+        this.logger = logger;
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
+    [HttpGet]
     public IEnumerable<BoardGameCollection> Get()
     {
         return Enumerable.Range(1, 5).Select(index => new BoardGameCollection())

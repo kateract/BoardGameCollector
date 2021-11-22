@@ -1,4 +1,4 @@
-namespace BoardGameCollector.Models;
+namespace BoardGameCollector.Api.Models;
 
 public class BoardGameCollection {
   
